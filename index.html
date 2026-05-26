@@ -1,0 +1,1366 @@
+ 
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#ece9e0;
+  font-family:'Malgun Gothic',sans-serif;
+  width:100vw; height:100vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+#topBar {
+  background:rgba(255,255,255,0.88);
+  padding:8px 20px;
+  border-bottom:1px solid #ccc;
+  font-size:15px;
+  font-weight:bold;
+  color:#333;
+  text-align:center;
+  letter-spacing:1px;
+  flex-shrink:0;
+}
+#wrapper {
+  flex:1;
+  display:flex;
+  overflow:hidden;
+}
+#canvasWrap {
+  flex:1;
+  position:relative;
+  overflow:hidden;
+}
+#mainCanvas {
+  display:block;
+  width:100%;
+  height:100%;
+  cursor:default;
+}
+
+/* ── 사이드 패널 ── */
+#sidePanel {
+  width:310px;
+  background:rgba(255,255,255,0.93);
+  border-left:1px solid #ccc;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  flex-shrink:0;
+}
+.side-section {
+  flex:1;
+  overflow-y:auto;
+  padding:13px;
+  border-bottom:2px solid #e8e8e8;
+  transition:background .35s;
+}
+.side-section:last-child { border-bottom:none; }
+.sec-title {
+  font-size:13px;
+  font-weight:bold;
+  padding:6px 10px;
+  border-radius:6px;
+  margin-bottom:10px;
+  text-align:center;
+}
+.sec-title.histone { background:#e8d8ff; color:#5a2d91; }
+.sec-title.dna     { background:#d0e8ff; color:#1a4fa0; }
+
+/* 아미노산 체인 */
+.amino-chain {
+  display:flex;
+  flex-wrap:wrap;
+  gap:3px;
+  align-items:center;
+  justify-content:center;
+  background:#faf8ff;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:9px 7px;
+  margin-bottom:9px;
+}
+.amino-bead {
+  width:38px; height:38px;
+  border-radius:50%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  font-size:8px;
+  font-weight:bold;
+  color:white;
+  text-align:center;
+  line-height:1.2;
+  box-shadow:0 2px 5px rgba(0,0,0,.2);
+  cursor:pointer;
+  transition:transform .2s;
+  position:relative;
+}
+.amino-bead:hover { transform:scale(1.3); z-index:10; }
+.amino-bead::after {
+  content:attr(data-tip);
+  position:absolute;
+  bottom:108%;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.82);
+  color:white;
+  font-size:10px;
+  padding:4px 8px;
+  border-radius:6px;
+  white-space:nowrap;
+  display:none;
+  pointer-events:none;
+  z-index:100;
+}
+.amino-bead:hover::after { display:block; }
+.peptide-bond {
+  width:13px; height:3px;
+  background:#bbb;
+  border-radius:2px;
+  flex-shrink:0;
+}
+
+/* 뉴클레오타이드 */
+.nt-row {
+  display:flex;
+  gap:5px;
+  justify-content:center;
+  margin-bottom:9px;
+}
+.nt-unit {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.nt-box {
+  width:60px; height:44px;
+  border-radius:9px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:bold;
+  color:white;
+  cursor:pointer;
+  box-shadow:0 2px 5px rgba(0,0,0,.18);
+  transition:transform .2s;
+  position:relative;
+}
+.nt-box:hover { transform:scale(1.1); }
+.nt-box::after {
+  content:attr(data-tip);
+  position:absolute;
+  bottom:108%;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.82);
+  color:white;
+  font-size:10px;
+  padding:4px 8px;
+  border-radius:6px;
+  white-space:nowrap;
+  display:none;
+  z-index:100;
+}
+.nt-box:hover::after { display:block; }
+.nt-conn { width:2px; height:7px; background:#bbb; margin:0 auto; }
+.nt-label { font-size:9px; color:#777; margin-top:3px; text-align:center; }
+.ph  { background:linear-gradient(135deg,#e74c3c,#c0392b); }
+.su  { background:linear-gradient(135deg,#f39c12,#d68910); }
+.bA  { background:linear-gradient(135deg,#27ae60,#1e8449); }
+.bT  { background:linear-gradient(135deg,#2980b9,#1f618d); }
+.bG  { background:linear-gradient(135deg,#e91e8c,#ad1457); }
+.bC  { background:linear-gradient(135deg,#8e44ad,#6c3483); }
+
+.info-box {
+  background:#f8f8f8;
+  border:1px solid #e0e0e0;
+  border-radius:8px;
+  padding:8px 11px;
+  font-size:11px;
+  line-height:1.85;
+  color:#444;
+}
+.info-box b { color:#222; }
+.legend {
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+}
+.leg-item {
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:10px;
+  color:#555;
+}
+.leg-dot { width:11px; height:11px; border-radius:50%; }
+
+
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNA와 단백질 구조 시뮬레이션</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#ece9e0;
+  font-family:'Malgun Gothic',sans-serif;
+  width:100vw; height:100vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+#topBar {
+  background:rgba(255,255,255,0.88);
+  padding:8px 20px;
+  border-bottom:1px solid #ccc;
+  font-size:15px;
+  font-weight:bold;
+  color:#333;
+  text-align:center;
+  letter-spacing:1px;
+  flex-shrink:0;
+}
+#wrapper {
+  flex:1;
+  display:flex;
+  overflow:hidden;
+}
+#canvasWrap {
+  flex:1;
+  position:relative;
+  overflow:hidden;
+}
+#mainCanvas {
+  display:block;
+  width:100%;
+  height:100%;
+  cursor:default;
+}
+
+/* ── 사이드 패널 ── */
+#sidePanel {
+  width:310px;
+  background:rgba(255,255,255,0.93);
+  border-left:1px solid #ccc;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  flex-shrink:0;
+}
+.side-section {
+  flex:1;
+  overflow-y:auto;
+  padding:13px;
+  border-bottom:2px solid #e8e8e8;
+  transition:background .35s;
+}
+.side-section:last-child { border-bottom:none; }
+.sec-title {
+  font-size:13px;
+  font-weight:bold;
+  padding:6px 10px;
+  border-radius:6px;
+  margin-bottom:10px;
+  text-align:center;
+}
+.sec-title.histone { background:#e8d8ff; color:#5a2d91; }
+.sec-title.dna     { background:#d0e8ff; color:#1a4fa0; }
+
+/* 아미노산 체인 */
+.amino-chain {
+  display:flex;
+  flex-wrap:wrap;
+  gap:3px;
+  align-items:center;
+  justify-content:center;
+  background:#faf8ff;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:9px 7px;
+  margin-bottom:9px;
+}
+.amino-bead {
+  width:38px; height:38px;
+  border-radius:50%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  font-size:8px;
+  font-weight:bold;
+  color:white;
+  text-align:center;
+  line-height:1.2;
+  box-shadow:0 2px 5px rgba(0,0,0,.2);
+  cursor:pointer;
+  transition:transform .2s;
+  position:relative;
+}
+.amino-bead:hover { transform:scale(1.3); z-index:10; }
+.amino-bead::after {
+  content:attr(data-tip);
+  position:absolute;
+  bottom:108%;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.82);
+  color:white;
+  font-size:10px;
+  padding:4px 8px;
+  border-radius:6px;
+  white-space:nowrap;
+  display:none;
+  pointer-events:none;
+  z-index:100;
+}
+.amino-bead:hover::after { display:block; }
+.peptide-bond {
+  width:13px; height:3px;
+  background:#bbb;
+  border-radius:2px;
+  flex-shrink:0;
+}
+
+/* 뉴클레오타이드 */
+.nt-row {
+  display:flex;
+  gap:5px;
+  justify-content:center;
+  margin-bottom:9px;
+}
+.nt-unit {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.nt-box {
+  width:60px; height:44px;
+  border-radius:9px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:bold;
+  color:white;
+  cursor:pointer;
+  box-shadow:0 2px 5px rgba(0,0,0,.18);
+  transition:transform .2s;
+  position:relative;
+}
+.nt-box:hover { transform:scale(1.1); }
+.nt-box::after {
+  content:attr(data-tip);
+  position:absolute;
+  bottom:108%;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.82);
+  color:white;
+  font-size:10px;
+  padding:4px 8px;
+  border-radius:6px;
+  white-space:nowrap;
+  display:none;
+  z-index:100;
+}
+.nt-box:hover::after { display:block; }
+.nt-conn { width:2px; height:7px; background:#bbb; margin:0 auto; }
+.nt-label { font-size:9px; color:#777; margin-top:3px; text-align:center; }
+.ph  { background:linear-gradient(135deg,#e74c3c,#c0392b); }
+.su  { background:linear-gradient(135deg,#f39c12,#d68910); }
+.bA  { background:linear-gradient(135deg,#27ae60,#1e8449); }
+.bT  { background:linear-gradient(135deg,#2980b9,#1f618d); }
+.bG  { background:linear-gradient(135deg,#e91e8c,#ad1457); }
+.bC  { background:linear-gradient(135deg,#8e44ad,#6c3483); }
+
+.info-box {
+  background:#f8f8f8;
+  border:1px solid #e0e0e0;
+  border-radius:8px;
+  padding:8px 11px;
+  font-size:11px;
+  line-height:1.85;
+  color:#444;
+}
+.info-box b { color:#222; }
+.legend {
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+}
+.leg-item {
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:10px;
+  color:#555;
+}
+.leg-dot { width:11px; height:11px; border-radius:50%; }
+</style>
+</head>
+<body>
+
+<div id="topBar">🧬 DNA와 단백질 구조 시뮬레이션 — 뉴클레오솜 또는 DNA를 클릭하세요</div>
+
+<div id="wrapper">
+  <div id="canvasWrap">
+    <canvas id="mainCanvas"></canvas>
+  </div>
+
+  <div id="sidePanel">
+    <div class="side-section" id="secHistone">
+      <div class="sec-title histone">🔴 히스톤 단백질 — 아미노산 구조</div>
+      <div class="amino-chain" id="aminoChain"></div>
+      <div class="legend" id="aminoLegend"></div>
+      <div class="info-box" style="margin-top:8px">
+        <b>펩타이드 결합</b>: -NH₂ + -COOH → -CO-NH- + H₂O<br>
+        • 히스톤 8개 → <b>뉴클레오솜</b> 구성<br>
+        • DNA가 히스톤 주위를 <b>1.65바퀴</b> 감김<br>
+        • 뉴클레오솜이 모여 <b>염색질 섬유</b> 형성
+      </div>
+    </div>
+    <div class="side-section" id="secDNA">
+      <div class="sec-title dna">🔵 DNA — 뉴클레오타이드 구조</div>
+      <div class="nt-row" id="ntRow"></div>
+      <div class="info-box">
+        <b>뉴클레오타이드</b> = 인산 + 디옥시리보스 + 염기<br>
+        • <b style="color:#27ae60">A</b>↔<b style="color:#2980b9">T</b> (수소결합 2개)
+          &nbsp;|&nbsp;
+          <b style="color:#e91e8c">G</b>↔<b style="color:#8e44ad">C</b> (수소결합 3개)<br>
+        • 뉴클레오타이드 연결 → <b>폴리뉴클레오타이드</b><br>
+        • 두 가닥 → <b>이중나선 DNA</b>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   캔버스 초기화
+══════════════════════════════════════ */
+const canvas = document.getElementById('mainCanvas');
+const ctx    = canvas.getContext('2d');
+let W, H, sc;
+let hitAreas = [];
+
+function resize(){
+  const wrap = document.getElementById('canvasWrap');
+  W = canvas.width  = wrap.clientWidth;
+  H = canvas.height = wrap.clientHeight;
+  sc = Math.min(W/680, H/740);
+  draw();
+}
+window.addEventListener('resize', resize);
+
+/* ═══════════════════════════════════════
+   유틸
+══════════════════════════════════════ */
+function rg(x,y,r,c1,c2){
+  const g=ctx.createRadialGradient(x-r*.3,y-r*.33,r*.04,x,y,r);
+  g.addColorStop(0,c1); g.addColorStop(1,c2); return g;
+}
+function circ(x,y,r,fill,stroke,lw=1){
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+  if(fill){ctx.fillStyle=fill; ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke; ctx.lineWidth=lw; ctx.stroke();}
+}
+function txt(t,x,y,sz,col,align='left',bold=true){
+  ctx.save();
+  ctx.font=(bold?'bold ':'')+sz+'px Malgun Gothic';
+  ctx.fillStyle=col; ctx.textAlign=align;
+  ctx.fillText(t,x,y); ctx.restore();
+}
+function arrowLine(x1,y1,x2,y2,col='#555',lw=1.5){
+  ctx.save();
+  ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const a=Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-8*Math.cos(a-.35),y2-8*Math.sin(a-.35));
+  ctx.lineTo(x2-8*Math.cos(a+.35),y2-8*Math.sin(a+.35));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   염색체
+══════════════════════════════════════ */
+function drawChromosome(cx,cy,s){
+  ctx.save(); ctx.translate(cx,cy); ctx.scale(s,s);
+  const arms=[[-15,-50,-6,-9],[15,-50,6,-9],[-15,50,-6,9],[15,50,6,9]];
+  arms.forEach(([ex,ey,bx,by])=>{
+    ctx.beginPath();
+    ctx.moveTo(bx,by);
+    ctx.bezierCurveTo(bx*2,ey*.4,ex*.85,ey*.72,ex,ey);
+    ctx.lineWidth=19; ctx.strokeStyle='#6080cc'; ctx.lineCap='round'; ctx.stroke();
+    ctx.lineWidth=10; ctx.strokeStyle='rgba(160,195,255,.25)'; ctx.stroke();
+  });
+  const cg=rg(0,0,12,'#90aaee','#3a5aaa');
+  circ(0,0,12,cg,'#3a5aaa',1.5);
+  ctx.strokeStyle='#222'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   코일 섬유 (굵은 염색질 섬유)
+══════════════════════════════════════ */
+function drawCoiledFiber(pts, thick, col1, col2){
+  if(pts.length<2) return;
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.12)'; ctx.shadowBlur=7;
+  ctx.lineWidth=thick; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.strokeStyle=col2;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const mx=(pts[i-1].x+pts[i].x)/2, my=(pts[i-1].y+pts[i].y)/2;
+    ctx.quadraticCurveTo(pts[i-1].x,pts[i-1].y,mx,my);
+  }
+  ctx.lineTo(pts[pts.length-1].x,pts[pts.length-1].y);
+  ctx.stroke();
+  ctx.lineWidth=thick*.38; ctx.strokeStyle=col1;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const mx=(pts[i-1].x+pts[i].x)/2, my=(pts[i-1].y+pts[i].y)/2;
+    ctx.quadraticCurveTo(pts[i-1].x,pts[i-1].y,mx,my);
+  }
+  ctx.lineTo(pts[pts.length-1].x,pts[pts.length-1].y);
+  ctx.stroke();
+  ctx.shadowBlur=0; ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   뉴클레오솜 비드
+══════════════════════════════════════ */
+function drawNucBead(x,y,r,light='#c0a0f8',dark='#5a3a9a'){
+  const g=rg(x,y,r,light,dark);
+  circ(x,y,r,g,null);
+  for(let i=0;i<7;i++){
+    const a=(i/7)*Math.PI*2;
+    circ(x+Math.cos(a)*r*.56,y+Math.sin(a)*r*.56,r*.17,'rgba(255,255,255,.17)',null);
+  }
+  circ(x-r*.27,y-r*.27,r*.21,'rgba(255,255,255,.33)',null);
+}
+
+/* ═══════════════════════════════════════
+   DNA 이중나선
+══════════════════════════════════════ */
+function drawDNAHelix(ox,oy,length,tilt=0.09){
+  ctx.save();
+  ctx.translate(ox,oy); ctx.rotate(tilt);
+  const amp=12, period=26, n=Math.floor(length/2);
+  const bc=[['#55c8a0','#2e8a60'],['#74b0e8','#2060a0'],
+            ['#f080b8','#b02070'],['#a890f0','#6040b0']];
+  for(let i=0;i<n;i+=3){
+    const y=i*2, ph=(i/period)*Math.PI*2;
+    const x1=Math.sin(ph)*amp, x2=Math.sin(ph+Math.PI)*amp;
+    const c=bc[Math.floor(i/6)%4];
+    ctx.strokeStyle='rgba(160,190,220,.5)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(x2,y); ctx.stroke();
+    ctx.fillStyle=c[0]; ctx.fillRect(x1-8,y-4,16,8);
+    ctx.fillStyle=c[1]; ctx.fillRect(x2-8,y-4,16,8);
+  }
+  ctx.beginPath();
+  for(let i=0;i<=n;i++){
+    const y=i*2, x=Math.sin((i/period)*Math.PI*2)*amp;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='#80b8e8'; ctx.lineWidth=3.8; ctx.lineJoin='round'; ctx.stroke();
+  ctx.beginPath();
+  for(let i=0;i<=n;i++){
+    const y=i*2, x=Math.sin((i/period)*Math.PI*2+Math.PI)*amp;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='#5888c8'; ctx.lineWidth=3.8; ctx.stroke();
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   다색 단백질 고리 (단백질 A)
+══════════════════════════════════════ */
+const aaColors=[
+  '#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c',
+  '#3498db','#9b59b6','#e91e63','#ff5722','#8bc34a',
+  '#00bcd4','#673ab7','#ff9800','#4caf50','#f06292','#7986cb'
+];
+function drawProteinRing(cx,cy,r,br=10){
+  const n=aaColors.length;
+  ctx.save();
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const a=(i/n)*Math.PI*2-Math.PI/2;
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle='rgba(100,100,100,.32)'; ctx.lineWidth=3; ctx.stroke();
+  for(let i=0;i<n;i++){
+    const a=(i/n)*Math.PI*2-Math.PI/2;
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    const g=rg(x,y,br,aaColors[i]+'ee',aaColors[i]+'77');
+    circ(x,y,br,g,null);
+    circ(x-br*.27,y-br*.27,br*.24,'rgba(255,255,255,.38)',null);
+  }
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   메인 draw
+══════════════════════════════════════ */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#ede8de'); bg.addColorStop(1,'#e0dbd0');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  hitAreas=[];
+
+  /* ── 기준 좌표 ── */
+  const chrX   = W*.52,  chrY   = H*.10;   // 염색체
+  const dnaX   = W*.85,  dnaY   = H*.30;   // DNA 시작
+  const dnaLen = H*.60;
+  const protAX = W*.17,  protAY = H*.80;   // 단백질 A
+
+  /* ════ DNA 이중나선 ════ */
+  drawDNAHelix(dnaX, dnaY, dnaLen, 0.08);
+  hitAreas.push({type:'dna', x:dnaX, y:dnaY, w:26*sc, h:dnaLen});
+
+  txt('DNA',    dnaX-55*sc, dnaY+dnaLen*.22, 12*sc,'#222');
+  arrowLine(dnaX-18*sc, dnaY+dnaLen*.22-4*sc, dnaX-3*sc, dnaY+dnaLen*.22-4*sc,'#444');
+  txt('유전자 A', dnaX-62*sc, dnaY+dnaLen*.40, 11*sc,'#555');
+  arrowLine(dnaX-18*sc, dnaY+dnaLen*.39, dnaX-3*sc, dnaY+dnaLen*.36,'#666');
+
+  /* ════ 염색체 ════ */
+  drawChromosome(chrX, chrY, sc*1.0);
+  txt('염색체', chrX, chrY-78*sc, 13*sc,'#222','center');
+
+  /* ════════════════════════════════════════
+     흐름 연결: 염색체 → 코일섬유 → 뉴클레오솜 → DNA
+     교과서 구조대로 하나의 연속 구조물로 배치
+  ════════════════════════════════════════ */
+
+  /*
+   * [레이아웃 설계]
+   *  - 염색체 동원체 아래쪽에서 얇은 실이 나와
+   *  - 굵은 코일 섬유(루프 모양)로 이어지고
+   *  - 코일 섬유 끝에서 얇아지며 뉴클레오솜 비드 체인으로 연결
+   *  - 비드 체인 끝이 DNA 이중나선으로 이어짐
+   */
+
+  /* == 1단계: 염색체에서 코일 섬유 시작점까지 연결 실 == */
+  const coilStartX = W*.16, coilStartY = H*.30;  // 코일 섬유 중심
+  const coilEndX   = W*.30, coilEndY   = H*.44;  // 코일 섬유 → 비드 시작
+
+  // 염색체 → 코일 연결 얇은 실
+  ctx.save();
+  ctx.strokeStyle='#6065c0'; ctx.lineWidth=2.2*sc; ctx.lineCap='round';
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(chrX-12*sc, chrY+18*sc);
+  ctx.bezierCurveTo(
+    chrX-40*sc, chrY+60*sc,
+    coilStartX+80*sc, coilStartY-40*sc,
+    coilStartX+55*sc, coilStartY-10*sc
+  );
+  ctx.stroke(); ctx.restore();
+
+  /* == 2단계: 굵은 코일 섬유 (루프) == */
+  const fpts=[];
+  const fc=26;
+  for(let i=0;i<fc;i++){
+    const tt=i/(fc-1);
+    const la=tt*Math.PI*5.8;
+    const lr=(60-tt*20)*sc;
+    fpts.push({
+      x: coilStartX + Math.cos(la)*lr*(1-tt*.25),
+      y: coilStartY + Math.sin(la)*lr*.70 - tt*50*sc
+    });
+  }
+  drawCoiledFiber(fpts, 21*sc, '#c0b0f8','#6858b0');
+  // 코어
+  circ(coilStartX-7*sc, coilStartY-25*sc, 18*sc,
+    rg(coilStartX-7*sc,coilStartY-25*sc,18*sc,'#6050a8','#28205a'),null);
+
+  /* == 3단계: 코일 섬유 끝 → 뉴클레오솜 비드 시작 연결 실 == */
+  // 코일의 마지막 점 → 비드 첫 번째 위치
+  const coilLastPt = fpts[fpts.length-1];
+
+  // 뉴클레오솜 비드 위치 (오른쪽으로 퍼지며 DNA 쪽으로 이어짐)
+  const beads=[
+    {x:W*.34, y:H*.47, r:15*sc},
+    {x:W*.38, y:H*.44, r:15*sc},
+    {x:W*.41, y:H*.47, r:14*sc},
+    {x:W*.45, y:H*.43, r:13*sc},
+    {x:W*.48, y:H*.46, r:12*sc},
+    // 작아지는 클러스터
+    {x:W*.51, y:H*.43, r:11*sc},
+    {x:W*.53, y:H*.46, r:10*sc},
+    {x:W*.55, y:H*.42, r:9*sc},
+    // 아주 작은 비드
+    {x:W*.57, y:H*.45, r:8*sc},
+    {x:W*.59, y:H*.41, r:7*sc},
+  ];
+
+  // 코일 끝 → 첫 비드 연결
+  ctx.save();
+  ctx.strokeStyle='#5060b8'; ctx.lineWidth=2.2*sc; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(coilLastPt.x, coilLastPt.y);
+  ctx.bezierCurveTo(
+    coilLastPt.x+20*sc, coilLastPt.y+15*sc,
+    beads[0].x-20*sc,   beads[0].y+10*sc,
+    beads[0].x,          beads[0].y
+  );
+  ctx.stroke(); ctx.restore();
+
+  // 비드 사이 연결 실
+  ctx.save();
+  ctx.strokeStyle='#5060b8'; ctx.lineWidth=2.2*sc; ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.beginPath();
+  beads.forEach((b,i)=>i===0?ctx.moveTo(b.x,b.y):ctx.lineTo(b.x,b.y));
+  ctx.stroke(); ctx.restore();
+
+  // 비드 그리기
+  beads.forEach(b=>{
+    drawNucBead(b.x, b.y, b.r);
+    hitAreas.push({type:'histone', x:b.x, y:b.y, r:b.r+6*sc});
+  });
+
+  /* == 4단계: 마지막 비드 → DNA 이중나선 연결 실 == */
+  const lastB = beads[beads.length-1];
+  ctx.save();
+  ctx.strokeStyle='#5878b8'; ctx.lineWidth=2*sc; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(lastB.x+lastB.r*.7, lastB.y-lastB.r*.3);
+  ctx.bezierCurveTo(
+    lastB.x+40*sc, lastB.y-20*sc,
+    dnaX-20*sc,     dnaY+30*sc,
+    dnaX-3*sc,       dnaY+40*sc
+  );
+  ctx.stroke(); ctx.restore();
+
+  /* ════ 단백질 A (좌하단) ════ */
+  drawProteinRing(protAX, protAY, 50*sc, 10*sc);
+  txt('단백질 A', protAX, protAY+68*sc, 12*sc,'#333','center');
+
+  // 단백질 ← 화살표
+  const arrY=H*.82;
+  arrowLine(W*.52,arrY, protAX+54*sc,arrY,'#999');
+  arrowLine(W*.60,arrY, W*.55,arrY,'#999');
+  txt('유전자 A', W*.61,arrY+4*sc, 11*sc,'#666');
+
+  /* ════ 레이블 ════ */
+  txt('뉴클레오솜', W*.44, H*.38, 12*sc,'#333','center');
+
+  /* ════ 클릭 힌트 ════ */
+  ctx.save();
+  ctx.font=`bold ${10*sc}px Malgun Gothic`;
+  ctx.fillStyle='rgba(70,40,150,.6)';
+  ctx.textAlign='center';
+  ctx.fillText('▼ 뉴클레오솜 클릭 → 아미노산 구조', W*.44, H*.55);
+  ctx.fillStyle='rgba(30,80,180,.6)';
+  ctx.fillText('◀ DNA 클릭 → 뉴클레오타이드 구조', W*.76, H*.62);
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   사이드 패널 – 아미노산
+══════════════════════════════════════ */
+const aminoData=[
+  {name:'Lys\n리신',       col:'#4ecdc4', tip:'염기성 아미노산'},
+  {name:'Arg\n아르기닌',    col:'#1abc9c', tip:'염기성 아미노산'},
+  {name:'Gly\n글리신',     col:'#f39c12', tip:'중성 아미노산'},
+  {name:'Ala\n알라닌',     col:'#f1c40f', tip:'중성 아미노산'},
+  {name:'Phe\n페닐알라닌', col:'#9b59b6', tip:'방향족 아미노산'},
+  {name:'Asp\n아스파트산', col:'#e74c3c', tip:'산성 아미노산'},
+  {name:'Glu\n글루탐산',   col:'#e91e63', tip:'산성 아미노산'},
+  {name:'Ser\n세린',       col:'#fdcb6e', tip:'중성 아미노산'},
+  {name:'Thr\n트레오닌',   col:'#e67e22', tip:'중성 아미노산'},
+  {name:'Lys\n리신',       col:'#4ecdc4', tip:'염기성 아미노산'},
+];
+function buildAmino(){
+  const chain=document.getElementById('aminoChain');
+  chain.innerHTML='';
+  aminoData.forEach((aa,i)=>{
+    const d=document.createElement('div');
+    d.className='amino-bead';
+    d.style.background=`radial-gradient(circle at 35% 35%,${aa.col}dd,${aa.col},${aa.col}88)`;
+    d.setAttribute('data-tip',aa.tip);
+    d.innerHTML=aa.name.replace('\n','<br>');
+    chain.appendChild(d);
+    if(i<aminoData.length-1){
+      const b=document.createElement('div');
+      b.className='peptide-bond'; chain.appendChild(b);
+    }
+  });
+  const leg=document.getElementById('aminoLegend');
+  leg.innerHTML='';
+  [['#4ecdc4','염기성'],['#f1c40f','중성'],['#e74c3c','산성'],['#9b59b6','방향족']].forEach(([c,n])=>{
+    leg.innerHTML+=`<div class="leg-item"><div class="leg-dot" style="background:${c}"></div>${n}</div>`;
+  });
+}
+
+/* ═══════════════════════════════════════
+   사이드 패널 – 뉴클레오타이드
+══════════════════════════════════════ */
+const ntData=[
+  {base:'A', name:'아데닌',   bc:'bA', pair:'T'},
+  {base:'T', name:'티민',     bc:'bT', pair:'A'},
+  {base:'G', name:'구아닌',   bc:'bG', pair:'C'},
+  {base:'C', name:'사이토신', bc:'bC', pair:'G'},
+];
+function buildNT(){
+  const row=document.getElementById('ntRow');
+  row.innerHTML='';
+  ntData.forEach(nt=>{
+    const u=document.createElement('div');
+    u.className='nt-unit';
+    u.innerHTML=`
+      <div class="nt-box ph" data-tip="인산기 (PO₄³⁻) — 당-인산 골격">🔴<br>인산</div>
+      <div class="nt-conn"></div>
+      <div class="nt-box su" data-tip="디옥시리보스 (5탄당)">🟡<br>당</div>
+      <div class="nt-conn"></div>
+      <div class="nt-box ${nt.bc}" data-tip="${nt.name}(${nt.base}) ↔ ${nt.pair}">${nt.base}<br><small>${nt.name.slice(0,2)}</small></div>
+      <div class="nt-label">${nt.name}</div>
+    `;
+    row.appendChild(u);
+  });
+}
+
+/* ═══════════════════════════════════════
+   강조 효과
+══════════════════════════════════════ */
+function highlight(type){
+  const s1=document.getElementById('secHistone');
+  const s2=document.getElementById('secDNA');
+  if(type==='histone'){
+    s1.style.background='rgba(200,170,255,.45)';
+    setTimeout(()=>s1.style.background='',700);
+  } else {
+    s2.style.background='rgba(160,200,255,.45)';
+    setTimeout(()=>s2.style.background='',700);
+  }
+}
+
+/* ═══════════════════════════════════════
+   클릭 / 호버
+══════════════════════════════════════ */
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(W/rect.width);
+  const my=(e.clientY-rect.top)*(H/rect.height);
+  for(const a of hitAreas){
+    if(a.type==='histone'){
+      if(Math.hypot(mx-a.x,my-a.y)<a.r){ highlight('histone'); return; }
+    } else if(a.type==='dna'){
+      if(mx>=a.x-a.w && mx<=a.x+a.w && my>=a.y && my<=a.y+a.h){
+        highlight('dna'); return;
+      }
+    }
+  }
+});
+canvas.addEventListener('mousemove',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(W/rect.width);
+  const my=(e.clientY-rect.top)*(H/rect.height);
+  let h=false;
+  for(const a of hitAreas){
+    if(a.type==='histone'){ if(Math.hypot(mx-a.x,my-a.y)<a.r){h=true;break;} }
+    else if(a.type==='dna'){
+      if(mx>=a.x-a.w&&mx<=a.x+a.w&&my>=a.y&&my<=a.y+a.h){h=true;break;}
+    }
+  }
+  canvas.style.cursor=h?'pointer':'default';
+});
+
+/* ═══════════════════════════════════════
+   시작
+══════════════════════════════════════ */
+buildAmino();
+buildNT();
+resize();
+</script>
+</body>
+</html>
+
+
+
+							<script>
+                            	
+/* ═══════════════════════════════════════
+   캔버스 초기화
+══════════════════════════════════════ */
+const canvas = document.getElementById('mainCanvas');
+const ctx    = canvas.getContext('2d');
+let W, H, sc;
+let hitAreas = [];
+
+function resize(){
+  const wrap = document.getElementById('canvasWrap');
+  W = canvas.width  = wrap.clientWidth;
+  H = canvas.height = wrap.clientHeight;
+  sc = Math.min(W/680, H/740);
+  draw();
+}
+window.addEventListener('resize', resize);
+
+/* ═══════════════════════════════════════
+   유틸
+══════════════════════════════════════ */
+function rg(x,y,r,c1,c2){
+  const g=ctx.createRadialGradient(x-r*.3,y-r*.33,r*.04,x,y,r);
+  g.addColorStop(0,c1); g.addColorStop(1,c2); return g;
+}
+function circ(x,y,r,fill,stroke,lw=1){
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+  if(fill){ctx.fillStyle=fill; ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke; ctx.lineWidth=lw; ctx.stroke();}
+}
+function txt(t,x,y,sz,col,align='left',bold=true){
+  ctx.save();
+  ctx.font=(bold?'bold ':'')+sz+'px Malgun Gothic';
+  ctx.fillStyle=col; ctx.textAlign=align;
+  ctx.fillText(t,x,y); ctx.restore();
+}
+function arrowLine(x1,y1,x2,y2,col='#555',lw=1.5){
+  ctx.save();
+  ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const a=Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-8*Math.cos(a-.35),y2-8*Math.sin(a-.35));
+  ctx.lineTo(x2-8*Math.cos(a+.35),y2-8*Math.sin(a+.35));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   염색체
+══════════════════════════════════════ */
+function drawChromosome(cx,cy,s){
+  ctx.save(); ctx.translate(cx,cy); ctx.scale(s,s);
+  const arms=[[-15,-50,-6,-9],[15,-50,6,-9],[-15,50,-6,9],[15,50,6,9]];
+  arms.forEach(([ex,ey,bx,by])=>{
+    ctx.beginPath();
+    ctx.moveTo(bx,by);
+    ctx.bezierCurveTo(bx*2,ey*.4,ex*.85,ey*.72,ex,ey);
+    ctx.lineWidth=19; ctx.strokeStyle='#6080cc'; ctx.lineCap='round'; ctx.stroke();
+    ctx.lineWidth=10; ctx.strokeStyle='rgba(160,195,255,.25)'; ctx.stroke();
+  });
+  const cg=rg(0,0,12,'#90aaee','#3a5aaa');
+  circ(0,0,12,cg,'#3a5aaa',1.5);
+  ctx.strokeStyle='#222'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   코일 섬유 (굵은 염색질 섬유)
+══════════════════════════════════════ */
+function drawCoiledFiber(pts, thick, col1, col2){
+  if(pts.length<2) return;
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.12)'; ctx.shadowBlur=7;
+  ctx.lineWidth=thick; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.strokeStyle=col2;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const mx=(pts[i-1].x+pts[i].x)/2, my=(pts[i-1].y+pts[i].y)/2;
+    ctx.quadraticCurveTo(pts[i-1].x,pts[i-1].y,mx,my);
+  }
+  ctx.lineTo(pts[pts.length-1].x,pts[pts.length-1].y);
+  ctx.stroke();
+  ctx.lineWidth=thick*.38; ctx.strokeStyle=col1;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const mx=(pts[i-1].x+pts[i].x)/2, my=(pts[i-1].y+pts[i].y)/2;
+    ctx.quadraticCurveTo(pts[i-1].x,pts[i-1].y,mx,my);
+  }
+  ctx.lineTo(pts[pts.length-1].x,pts[pts.length-1].y);
+  ctx.stroke();
+  ctx.shadowBlur=0; ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   뉴클레오솜 비드
+══════════════════════════════════════ */
+function drawNucBead(x,y,r,light='#c0a0f8',dark='#5a3a9a'){
+  const g=rg(x,y,r,light,dark);
+  circ(x,y,r,g,null);
+  for(let i=0;i<7;i++){
+    const a=(i/7)*Math.PI*2;
+    circ(x+Math.cos(a)*r*.56,y+Math.sin(a)*r*.56,r*.17,'rgba(255,255,255,.17)',null);
+  }
+  circ(x-r*.27,y-r*.27,r*.21,'rgba(255,255,255,.33)',null);
+}
+
+/* ═══════════════════════════════════════
+   DNA 이중나선
+══════════════════════════════════════ */
+function drawDNAHelix(ox,oy,length,tilt=0.09){
+  ctx.save();
+  ctx.translate(ox,oy); ctx.rotate(tilt);
+  const amp=12, period=26, n=Math.floor(length/2);
+  const bc=[['#55c8a0','#2e8a60'],['#74b0e8','#2060a0'],
+            ['#f080b8','#b02070'],['#a890f0','#6040b0']];
+  for(let i=0;i<n;i+=3){
+    const y=i*2, ph=(i/period)*Math.PI*2;
+    const x1=Math.sin(ph)*amp, x2=Math.sin(ph+Math.PI)*amp;
+    const c=bc[Math.floor(i/6)%4];
+    ctx.strokeStyle='rgba(160,190,220,.5)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(x2,y); ctx.stroke();
+    ctx.fillStyle=c[0]; ctx.fillRect(x1-8,y-4,16,8);
+    ctx.fillStyle=c[1]; ctx.fillRect(x2-8,y-4,16,8);
+  }
+  ctx.beginPath();
+  for(let i=0;i<=n;i++){
+    const y=i*2, x=Math.sin((i/period)*Math.PI*2)*amp;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='#80b8e8'; ctx.lineWidth=3.8; ctx.lineJoin='round'; ctx.stroke();
+  ctx.beginPath();
+  for(let i=0;i<=n;i++){
+    const y=i*2, x=Math.sin((i/period)*Math.PI*2+Math.PI)*amp;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='#5888c8'; ctx.lineWidth=3.8; ctx.stroke();
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   다색 단백질 고리 (단백질 A)
+══════════════════════════════════════ */
+const aaColors=[
+  '#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c',
+  '#3498db','#9b59b6','#e91e63','#ff5722','#8bc34a',
+  '#00bcd4','#673ab7','#ff9800','#4caf50','#f06292','#7986cb'
+];
+function drawProteinRing(cx,cy,r,br=10){
+  const n=aaColors.length;
+  ctx.save();
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const a=(i/n)*Math.PI*2-Math.PI/2;
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle='rgba(100,100,100,.32)'; ctx.lineWidth=3; ctx.stroke();
+  for(let i=0;i<n;i++){
+    const a=(i/n)*Math.PI*2-Math.PI/2;
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    const g=rg(x,y,br,aaColors[i]+'ee',aaColors[i]+'77');
+    circ(x,y,br,g,null);
+    circ(x-br*.27,y-br*.27,br*.24,'rgba(255,255,255,.38)',null);
+  }
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   메인 draw
+══════════════════════════════════════ */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#ede8de'); bg.addColorStop(1,'#e0dbd0');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  hitAreas=[];
+
+  /* ── 기준 좌표 ── */
+  const chrX   = W*.52,  chrY   = H*.10;   // 염색체
+  const dnaX   = W*.85,  dnaY   = H*.30;   // DNA 시작
+  const dnaLen = H*.60;
+  const protAX = W*.17,  protAY = H*.80;   // 단백질 A
+
+  /* ════ DNA 이중나선 ════ */
+  drawDNAHelix(dnaX, dnaY, dnaLen, 0.08);
+  hitAreas.push({type:'dna', x:dnaX, y:dnaY, w:26*sc, h:dnaLen});
+
+  txt('DNA',    dnaX-55*sc, dnaY+dnaLen*.22, 12*sc,'#222');
+  arrowLine(dnaX-18*sc, dnaY+dnaLen*.22-4*sc, dnaX-3*sc, dnaY+dnaLen*.22-4*sc,'#444');
+  txt('유전자 A', dnaX-62*sc, dnaY+dnaLen*.40, 11*sc,'#555');
+  arrowLine(dnaX-18*sc, dnaY+dnaLen*.39, dnaX-3*sc, dnaY+dnaLen*.36,'#666');
+
+  /* ════ 염색체 ════ */
+  drawChromosome(chrX, chrY, sc*1.0);
+  txt('염색체', chrX, chrY-78*sc, 13*sc,'#222','center');
+
+  /* ════════════════════════════════════════
+     흐름 연결: 염색체 → 코일섬유 → 뉴클레오솜 → DNA
+     교과서 구조대로 하나의 연속 구조물로 배치
+  ════════════════════════════════════════ */
+
+  /*
+   * [레이아웃 설계]
+   *  - 염색체 동원체 아래쪽에서 얇은 실이 나와
+   *  - 굵은 코일 섬유(루프 모양)로 이어지고
+   *  - 코일 섬유 끝에서 얇아지며 뉴클레오솜 비드 체인으로 연결
+   *  - 비드 체인 끝이 DNA 이중나선으로 이어짐
+   */
+
+  /* == 1단계: 염색체에서 코일 섬유 시작점까지 연결 실 == */
+  const coilStartX = W*.16, coilStartY = H*.30;  // 코일 섬유 중심
+  const coilEndX   = W*.30, coilEndY   = H*.44;  // 코일 섬유 → 비드 시작
+
+  // 염색체 → 코일 연결 얇은 실
+  ctx.save();
+  ctx.strokeStyle='#6065c0'; ctx.lineWidth=2.2*sc; ctx.lineCap='round';
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(chrX-12*sc, chrY+18*sc);
+  ctx.bezierCurveTo(
+    chrX-40*sc, chrY+60*sc,
+    coilStartX+80*sc, coilStartY-40*sc,
+    coilStartX+55*sc, coilStartY-10*sc
+  );
+  ctx.stroke(); ctx.restore();
+
+  /* == 2단계: 굵은 코일 섬유 (루프) == */
+  const fpts=[];
+  const fc=26;
+  for(let i=0;i<fc;i++){
+    const tt=i/(fc-1);
+    const la=tt*Math.PI*5.8;
+    const lr=(60-tt*20)*sc;
+    fpts.push({
+      x: coilStartX + Math.cos(la)*lr*(1-tt*.25),
+      y: coilStartY + Math.sin(la)*lr*.70 - tt*50*sc
+    });
+  }
+  drawCoiledFiber(fpts, 21*sc, '#c0b0f8','#6858b0');
+  // 코어
+  circ(coilStartX-7*sc, coilStartY-25*sc, 18*sc,
+    rg(coilStartX-7*sc,coilStartY-25*sc,18*sc,'#6050a8','#28205a'),null);
+
+  /* == 3단계: 코일 섬유 끝 → 뉴클레오솜 비드 시작 연결 실 == */
+  // 코일의 마지막 점 → 비드 첫 번째 위치
+  const coilLastPt = fpts[fpts.length-1];
+
+  // 뉴클레오솜 비드 위치 (오른쪽으로 퍼지며 DNA 쪽으로 이어짐)
+  const beads=[
+    {x:W*.34, y:H*.47, r:15*sc},
+    {x:W*.38, y:H*.44, r:15*sc},
+    {x:W*.41, y:H*.47, r:14*sc},
+    {x:W*.45, y:H*.43, r:13*sc},
+    {x:W*.48, y:H*.46, r:12*sc},
+    // 작아지는 클러스터
+    {x:W*.51, y:H*.43, r:11*sc},
+    {x:W*.53, y:H*.46, r:10*sc},
+    {x:W*.55, y:H*.42, r:9*sc},
+    // 아주 작은 비드
+    {x:W*.57, y:H*.45, r:8*sc},
+    {x:W*.59, y:H*.41, r:7*sc},
+  ];
+
+  // 코일 끝 → 첫 비드 연결
+  ctx.save();
+  ctx.strokeStyle='#5060b8'; ctx.lineWidth=2.2*sc; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(coilLastPt.x, coilLastPt.y);
+  ctx.bezierCurveTo(
+    coilLastPt.x+20*sc, coilLastPt.y+15*sc,
+    beads[0].x-20*sc,   beads[0].y+10*sc,
+    beads[0].x,          beads[0].y
+  );
+  ctx.stroke(); ctx.restore();
+
+  // 비드 사이 연결 실
+  ctx.save();
+  ctx.strokeStyle='#5060b8'; ctx.lineWidth=2.2*sc; ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.beginPath();
+  beads.forEach((b,i)=>i===0?ctx.moveTo(b.x,b.y):ctx.lineTo(b.x,b.y));
+  ctx.stroke(); ctx.restore();
+
+  // 비드 그리기
+  beads.forEach(b=>{
+    drawNucBead(b.x, b.y, b.r);
+    hitAreas.push({type:'histone', x:b.x, y:b.y, r:b.r+6*sc});
+  });
+
+  /* == 4단계: 마지막 비드 → DNA 이중나선 연결 실 == */
+  const lastB = beads[beads.length-1];
+  ctx.save();
+  ctx.strokeStyle='#5878b8'; ctx.lineWidth=2*sc; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(lastB.x+lastB.r*.7, lastB.y-lastB.r*.3);
+  ctx.bezierCurveTo(
+    lastB.x+40*sc, lastB.y-20*sc,
+    dnaX-20*sc,     dnaY+30*sc,
+    dnaX-3*sc,       dnaY+40*sc
+  );
+  ctx.stroke(); ctx.restore();
+
+  /* ════ 단백질 A (좌하단) ════ */
+  drawProteinRing(protAX, protAY, 50*sc, 10*sc);
+  txt('단백질 A', protAX, protAY+68*sc, 12*sc,'#333','center');
+
+  // 단백질 ← 화살표
+  const arrY=H*.82;
+  arrowLine(W*.52,arrY, protAX+54*sc,arrY,'#999');
+  arrowLine(W*.60,arrY, W*.55,arrY,'#999');
+  txt('유전자 A', W*.61,arrY+4*sc, 11*sc,'#666');
+
+  /* ════ 레이블 ════ */
+  txt('뉴클레오솜', W*.44, H*.38, 12*sc,'#333','center');
+
+  /* ════ 클릭 힌트 ════ */
+  ctx.save();
+  ctx.font=`bold ${10*sc}px Malgun Gothic`;
+  ctx.fillStyle='rgba(70,40,150,.6)';
+  ctx.textAlign='center';
+  ctx.fillText('▼ 뉴클레오솜 클릭 → 아미노산 구조', W*.44, H*.55);
+  ctx.fillStyle='rgba(30,80,180,.6)';
+  ctx.fillText('◀ DNA 클릭 → 뉴클레오타이드 구조', W*.76, H*.62);
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════
+   사이드 패널 – 아미노산
+══════════════════════════════════════ */
+const aminoData=[
+  {name:'Lys\n리신',       col:'#4ecdc4', tip:'염기성 아미노산'},
+  {name:'Arg\n아르기닌',    col:'#1abc9c', tip:'염기성 아미노산'},
+  {name:'Gly\n글리신',     col:'#f39c12', tip:'중성 아미노산'},
+  {name:'Ala\n알라닌',     col:'#f1c40f', tip:'중성 아미노산'},
+  {name:'Phe\n페닐알라닌', col:'#9b59b6', tip:'방향족 아미노산'},
+  {name:'Asp\n아스파트산', col:'#e74c3c', tip:'산성 아미노산'},
+  {name:'Glu\n글루탐산',   col:'#e91e63', tip:'산성 아미노산'},
+  {name:'Ser\n세린',       col:'#fdcb6e', tip:'중성 아미노산'},
+  {name:'Thr\n트레오닌',   col:'#e67e22', tip:'중성 아미노산'},
+  {name:'Lys\n리신',       col:'#4ecdc4', tip:'염기성 아미노산'},
+];
+function buildAmino(){
+  const chain=document.getElementById('aminoChain');
+  chain.innerHTML='';
+  aminoData.forEach((aa,i)=>{
+    const d=document.createElement('div');
+    d.className='amino-bead';
+    d.style.background=`radial-gradient(circle at 35% 35%,${aa.col}dd,${aa.col},${aa.col}88)`;
+    d.setAttribute('data-tip',aa.tip);
+    d.innerHTML=aa.name.replace('\n','<br>');
+    chain.appendChild(d);
+    if(i<aminoData.length-1){
+      const b=document.createElement('div');
+      b.className='peptide-bond'; chain.appendChild(b);
+    }
+  });
+  const leg=document.getElementById('aminoLegend');
+  leg.innerHTML='';
+  [['#4ecdc4','염기성'],['#f1c40f','중성'],['#e74c3c','산성'],['#9b59b6','방향족']].forEach(([c,n])=>{
+    leg.innerHTML+=`<div class="leg-item"><div class="leg-dot" style="background:${c}"></div>${n}</div>`;
+  });
+}
+
+/* ═══════════════════════════════════════
+   사이드 패널 – 뉴클레오타이드
+══════════════════════════════════════ */
+const ntData=[
+  {base:'A', name:'아데닌',   bc:'bA', pair:'T'},
+  {base:'T', name:'티민',     bc:'bT', pair:'A'},
+  {base:'G', name:'구아닌',   bc:'bG', pair:'C'},
+  {base:'C', name:'사이토신', bc:'bC', pair:'G'},
+];
+function buildNT(){
+  const row=document.getElementById('ntRow');
+  row.innerHTML='';
+  ntData.forEach(nt=>{
+    const u=document.createElement('div');
+    u.className='nt-unit';
+    u.innerHTML=`
+      <div class="nt-box ph" data-tip="인산기 (PO₄³⁻) — 당-인산 골격">🔴<br>인산</div>
+      <div class="nt-conn"></div>
+      <div class="nt-box su" data-tip="디옥시리보스 (5탄당)">🟡<br>당</div>
+      <div class="nt-conn"></div>
+      <div class="nt-box ${nt.bc}" data-tip="${nt.name}(${nt.base}) ↔ ${nt.pair}">${nt.base}<br><small>${nt.name.slice(0,2)}</small></div>
+      <div class="nt-label">${nt.name}</div>
+    `;
+    row.appendChild(u);
+  });
+}
+
+/* ═══════════════════════════════════════
+   강조 효과
+══════════════════════════════════════ */
+function highlight(type){
+  const s1=document.getElementById('secHistone');
+  const s2=document.getElementById('secDNA');
+  if(type==='histone'){
+    s1.style.background='rgba(200,170,255,.45)';
+    setTimeout(()=>s1.style.background='',700);
+  } else {
+    s2.style.background='rgba(160,200,255,.45)';
+    setTimeout(()=>s2.style.background='',700);
+  }
+}
+
+/* ═══════════════════════════════════════
+   클릭 / 호버
+══════════════════════════════════════ */
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(W/rect.width);
+  const my=(e.clientY-rect.top)*(H/rect.height);
+  for(const a of hitAreas){
+    if(a.type==='histone'){
+      if(Math.hypot(mx-a.x,my-a.y)<a.r){ highlight('histone'); return; }
+    } else if(a.type==='dna'){
+      if(mx>=a.x-a.w && mx<=a.x+a.w && my>=a.y && my<=a.y+a.h){
+        highlight('dna'); return;
+      }
+    }
+  }
+});
+canvas.addEventListener('mousemove',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(W/rect.width);
+  const my=(e.clientY-rect.top)*(H/rect.height);
+  let h=false;
+  for(const a of hitAreas){
+    if(a.type==='histone'){ if(Math.hypot(mx-a.x,my-a.y)<a.r){h=true;break;} }
+    else if(a.type==='dna'){
+      if(mx>=a.x-a.w&&mx<=a.x+a.w&&my>=a.y&&my<=a.y+a.h){h=true;break;}
+    }
+  }
+  canvas.style.cursor=h?'pointer':'default';
+});
+
+/* ═══════════════════════════════════════
+   시작
+══════════════════════════════════════ */
+buildAmino();
+buildNT();
+resize();
+
+
+							</script>
+                        </body>
+                        </html>
+                    
